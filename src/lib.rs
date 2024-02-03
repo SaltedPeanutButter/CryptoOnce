@@ -14,6 +14,8 @@
 //! Warning: This default method is vulnerable to bruteforce attacks. Therefore, users are
 //! encouraged to use their own passphrase with numbers, special characters, etc.
 
+mod kdf;
+
 pub fn add(left: usize, right: usize) -> usize {
     left + right
 }
