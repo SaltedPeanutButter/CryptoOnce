@@ -1,8 +1,8 @@
 use aes_gcm::{Aes256Gcm, Key};
-use sha2::Sha256;
+use once_cell::sync::Lazy;
 use pbkdf2::pbkdf2_hmac;
 use rand::seq::SliceRandom;
-use once_cell::sync::Lazy;
+use sha2::Sha256;
 
 static WORD_LIST: Lazy<Vec<String>> = Lazy::new(|| {
     let content = include_str!("../words.txt");
@@ -13,10 +13,12 @@ static WORD_LIST: Lazy<Vec<String>> = Lazy::new(|| {
     content
 });
 
-
 /// Anything that implements this trait can be used as encryption key for [`CryptoOnce`](crate).
 /// The only required method is [`CKey::to_key`].
-pub trait CKey where Self: Clone {
+pub trait CKey
+where
+    Self: Clone,
+{
     /// (Required) Self-consume to produce input material for KDF.
     fn consume(self) -> Vec<u8>;
 
@@ -48,7 +50,10 @@ impl WordKey {
     /// Create a key with variable number of words. Note that this function panics if `size > 7557`
     /// (the size of the word list).
     pub fn from_size(size: usize) -> WordKey {
-        assert!(size < WORD_LIST.len(), "WordKey size is larger than the total number of words");
+        assert!(
+            size < WORD_LIST.len(),
+            "WordKey size is larger than the total number of words"
+        );
         let words = WORD_LIST
             .choose_multiple(&mut rand::thread_rng(), 4)
             .map(|s| s.to_string())
@@ -83,7 +88,10 @@ impl CKey for String {
     }
 }
 
-impl<T> CKey for Vec<T> where T: CKey {
+impl<T> CKey for Vec<T>
+where
+    T: CKey,
+{
     fn consume(self) -> Vec<u8> {
         let mut result = Vec::new();
         for item in self {
@@ -93,7 +101,10 @@ impl<T> CKey for Vec<T> where T: CKey {
     }
 }
 
-impl<T, const N: usize> CKey for [T; N] where T: CKey {
+impl<T, const N: usize> CKey for [T; N]
+where
+    T: CKey,
+{
     fn consume(self) -> Vec<u8> {
         let mut result = Vec::new();
         for item in self {
@@ -103,7 +114,10 @@ impl<T, const N: usize> CKey for [T; N] where T: CKey {
     }
 }
 
-impl<T> CKey for &[T] where T: CKey {
+impl<T> CKey for &[T]
+where
+    T: CKey,
+{
     fn consume(self) -> Vec<u8> {
         let mut result = Vec::new();
         for item in self {
